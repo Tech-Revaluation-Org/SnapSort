@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QVBoxLayout, QHBoxLayout, QFileDialog
-import os
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox
+import os, shutil
 
 class SnapSortUI(QWidget):
     def __init__(self):
@@ -45,14 +45,34 @@ class SnapSortUI(QWidget):
     def load_files(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Folder")
         if folder:
+            self.folder_path = folder
             self.file_list.clear()
             for file in os.listdir(folder):
                 self.file_list.addItem(file)
             self.log_label.setText(f"Loaded files from: {folder}")
     
     def sort_files(self):
-        self.log_label.setText("Sorting files...")
-        # Add sorting logic here
+        if hasattr(self, 'folder_path'):
+            self.log_label.setText("Sorting files...")
+            extensions = {"Images": [".jpg", ".png", ".gif"],
+                          "Documents": [".pdf", ".docx", ".txt"],
+                          "Videos": [".mp4", ".avi", ".mkv"],
+                          "Music": [".mp3", ".wav"]}
+            
+            for category, exts in extensions.items():
+                category_path = os.path.join(self.folder_path, category)
+                if not os.path.exists(category_path):
+                    os.makedirs(category_path)
+                
+                for file in os.listdir(self.folder_path):
+                    file_path = os.path.join(self.folder_path, file)
+                    if os.path.isfile(file_path) and any(file.lower().endswith(ext) for ext in exts):
+                        shutil.move(file_path, os.path.join(category_path, file))
+            
+            self.load_files()
+            self.log_label.setText("Sorting completed.")
+        else:
+            self.log_label.setText("No folder selected.")
     
     def set_rules(self):
         self.log_label.setText("Opening rule settings...")
@@ -67,8 +87,8 @@ class SnapSortUI(QWidget):
         # Add bulk renaming logic here
     
     def open_settings(self):
-        self.log_label.setText("Opening settings...")
-        # Add settings logic here
+        QMessageBox.information(self, "Settings", "Settings window placeholder.")
+        self.log_label.setText("Opened settings.")
 
 if __name__ == "__main__":
     app = QApplication([])
