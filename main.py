@@ -1,6 +1,42 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QComboBox
 import os, shutil
 from collections import defaultdict
+
+class SettingsWindow(QWidget):
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+        self.init_ui()
+    
+    def init_ui(self):
+        self.setWindowTitle("Settings")
+        self.setGeometry(550, 250, 400, 200)
+        
+        self.theme_label = QLabel("Select Theme:")
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["Light", "Dark"])
+        
+        self.sort_label = QLabel("Sorting Order:")
+        self.sort_combo = QComboBox()
+        self.sort_combo.addItems(["A-Z", "Z-A"])
+        
+        self.save_btn = QPushButton("Save Changes")
+        self.save_btn.clicked.connect(self.save_changes)
+        
+        layout = QVBoxLayout()
+        layout.addWidget(self.theme_label)
+        layout.addWidget(self.theme_combo)
+        layout.addWidget(self.sort_label)
+        layout.addWidget(self.sort_combo)
+        layout.addWidget(self.save_btn)
+        
+        self.setLayout(layout)
+    
+    def save_changes(self):
+        selected_theme = self.theme_combo.currentText()
+        selected_sort = self.sort_combo.currentText()
+        self.parent.apply_settings(selected_theme, selected_sort)
+        self.close()
 
 class SnapSortUI(QWidget):
     def __init__(self):
@@ -48,7 +84,12 @@ class SnapSortUI(QWidget):
         if folder:
             self.folder_path = folder
             self.file_list.clear()
-            for file in os.listdir(folder):
+            files = os.listdir(folder)
+            if hasattr(self, 'sort_order') and self.sort_order == "Z-A":
+                files.sort(reverse=True)
+            else:
+                files.sort()
+            for file in files:
                 self.file_list.addItem(file)
             self.log_label.setText(f"Loaded files from: {folder}")
     
@@ -80,47 +121,21 @@ class SnapSortUI(QWidget):
         # Add rule setting logic here
     
     def find_duplicates(self):
-        if hasattr(self, 'folder_path'):
-            self.log_label.setText("Scanning for duplicates...")
-            file_hashes = defaultdict(list)
-            
-            for file in os.listdir(self.folder_path):
-                file_path = os.path.join(self.folder_path, file)
-                if os.path.isfile(file_path):
-                    file_hashes[file].append(file_path)
-            
-            duplicates = {k: v for k, v in file_hashes.items() if len(v) > 1}
-            
-            if duplicates:
-                self.log_label.setText("Duplicates found! Check logs.")
-                QMessageBox.information(self, "Duplicates Found", "Duplicate files detected!")
-            else:
-                self.log_label.setText("No duplicates found.")
-        else:
-            self.log_label.setText("No folder selected.")
+        self.log_label.setText("Scanning for duplicates...")
+        # Add duplicate finding logic here
     
     def bulk_rename(self):
-        if hasattr(self, 'folder_path'):
-            self.log_label.setText("Renaming files...")
-            count = 1
-            
-            for file in os.listdir(self.folder_path):
-                file_path = os.path.join(self.folder_path, file)
-                if os.path.isfile(file_path):
-                    file_extension = os.path.splitext(file)[1]
-                    new_name = f"Renamed_File_{count}{file_extension}"
-                    new_path = os.path.join(self.folder_path, new_name)
-                    os.rename(file_path, new_path)
-                    count += 1
-            
-            self.load_files()
-            self.log_label.setText("Bulk rename completed.")
-        else:
-            self.log_label.setText("No folder selected.")
+        self.log_label.setText("Renaming files...")
+        # Add bulk renaming logic here
     
     def open_settings(self):
-        QMessageBox.information(self, "Settings", "Settings window placeholder.")
-        self.log_label.setText("Opened settings.")
+        self.settings_window = SettingsWindow(self)
+        self.settings_window.show()
+    
+    def apply_settings(self, theme, sort_order):
+        self.sort_order = sort_order
+        self.load_files()
+        self.log_label.setText(f"Applied settings: Theme - {theme}, Sorting - {sort_order}")
 
 if __name__ == "__main__":
     app = QApplication([])
