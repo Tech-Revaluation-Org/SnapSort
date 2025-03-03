@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QComboBox
-import os, shutil
+import os, shutil, hashlib
 from collections import defaultdict
 
 class SettingsWindow(QWidget):
@@ -117,16 +117,46 @@ class SnapSortUI(QWidget):
             self.log_label.setText("No folder selected.")
     
     def set_rules(self):
-        self.log_label.setText("Opening rule settings...")
-        # Add rule setting logic here
+        self.log_label.setText("Setting rules feature to be implemented.")
     
     def find_duplicates(self):
-        self.log_label.setText("Scanning for duplicates...")
-        # Add duplicate finding logic here
+        if hasattr(self, 'folder_path'):
+            self.log_label.setText("Scanning for duplicates...")
+            hashes = defaultdict(list)
+            
+            for file in os.listdir(self.folder_path):
+                file_path = os.path.join(self.folder_path, file)
+                if os.path.isfile(file_path):
+                    file_hash = hashlib.md5(open(file_path, 'rb').read()).hexdigest()
+                    hashes[file_hash].append(file_path)
+            
+            duplicates = [v for v in hashes.values() if len(v) > 1]
+            if duplicates:
+                self.log_label.setText("Duplicate files detected! Check logs.")
+                QMessageBox.information(self, "Duplicates Found", "Duplicate files detected!")
+            else:
+                self.log_label.setText("No duplicates found.")
+        else:
+            self.log_label.setText("No folder selected.")
     
     def bulk_rename(self):
-        self.log_label.setText("Renaming files...")
-        # Add bulk renaming logic here
+        if hasattr(self, 'folder_path'):
+            self.log_label.setText("Renaming files...")
+            count = 1
+            
+            for file in os.listdir(self.folder_path):
+                file_path = os.path.join(self.folder_path, file)
+                if os.path.isfile(file_path):
+                    file_extension = os.path.splitext(file)[1]
+                    new_name = f"Renamed_File_{count}{file_extension}"
+                    new_path = os.path.join(self.folder_path, new_name)
+                    os.rename(file_path, new_path)
+                    count += 1
+            
+            self.load_files()
+            self.log_label.setText("Bulk rename completed.")
+        else:
+            self.log_label.setText("No folder selected.")
     
     def open_settings(self):
         self.settings_window = SettingsWindow(self)
