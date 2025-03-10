@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QComboBox
+from PyQt5.QtGui import QPalette, QColor
 import os, shutil, hashlib
 from collections import defaultdict
 
@@ -41,8 +42,9 @@ class SettingsWindow(QWidget):
 class SnapSortUI(QWidget):
     def __init__(self):
         super().__init__()
+        self.theme = "Light"
         self.init_ui()
-
+    
     def init_ui(self):
         self.setWindowTitle("SnapSort - Smart File Organizer")
         self.setGeometry(500, 200, 800, 600)
@@ -164,8 +166,19 @@ class SnapSortUI(QWidget):
     
     def apply_settings(self, theme, sort_order):
         self.sort_order = sort_order
+        self.change_theme(theme)
         self.load_files()
         self.log_label.setText(f"Applied settings: Theme - {theme}, Sorting - {sort_order}")
+    
+    def change_theme(self, theme):
+        palette = QPalette()
+        if theme == "Dark":
+            palette.setColor(QPalette.Window, QColor(53, 53, 53))
+            palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
+        else:
+            palette.setColor(QPalette.Window, QColor(255, 255, 255))
+            palette.setColor(QPalette.WindowText, QColor(0, 0, 0))
+        QApplication.instance().setPalette(palette)
 
 if __name__ == "__main__":
     app = QApplication([])
